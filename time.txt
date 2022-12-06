@@ -1,7 +1,1 @@
-sleep.c easy
-pingpong.c easy
-primes.c difficult, finished with reference to other's solution
-find.c moderate, key part is how to do it recursively
-xargs.c moderate, key part is how to parse arguments from previous command
-
-I did not record exact time spent on each assignment. Will do it in the next lab.
+20
