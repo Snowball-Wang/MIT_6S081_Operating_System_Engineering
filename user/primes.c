@@ -6,26 +6,29 @@ void
 pipeline(int *p)
 {
     int pchild[2];
-    pipe(pchild);
     int prime;
+
+    close(p[1]);      // close parent pipe write fd
 
     // if process reads no more data from pipe, just exits
     if(read(p[0], &prime, sizeof(prime)) == 0)
         exit(0);
 
+    pipe(pchild);
     if(fork()) // main process filters the primes
     {
         int n;
-        printf("prime: %d\n", prime);
+        printf("prime %d\n", prime);
         while(read(p[0], &n, sizeof(n)))
         {
             if(n % prime != 0)
                 write(pchild[1], &n, sizeof(n));
         }
         close(p[0]);      // close parent pipe read fd
-        close(p[1]);      // close parent pipe write fd
         close(pchild[1]); // close child pipe write fd
-        wait(0);
+        close(pchild[0]); // close child pipe read fd
+        wait((int *)0);
+        exit(0);
     }
     else // spawn child process to read from filtered prime numbers
     {
@@ -48,7 +51,7 @@ main(int argc, char *argv[])
         }
         close(p[0]);
         close(p[1]);
-        wait(0);
+        wait((int *)0);
     }
     else // child process starts the pipeline
     {
