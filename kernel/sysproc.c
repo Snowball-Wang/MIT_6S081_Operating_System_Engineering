@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -104,5 +105,29 @@ sys_trace(void)
   if(argint(0, &num) < 0)
     return -1;
   myproc()->trace = num;
+  return 0;
+}
+
+// implement sys_sysinfo
+uint64
+sys_sysinfo(void)
+{
+  uint64 sinfo_addr; // user pointer to struct sysinfo
+  struct sysinfo sinfo;
+  struct proc *p = myproc();
+
+  // the first argument for argaddr is the index for
+  // the first parameter passed to syscall
+  if(argaddr(0, &sinfo_addr) < 0)
+    return -1;
+  
+  // write the system info to struct sysinfo
+  sinfo.freemem = kcount_mem();
+  sinfo.nproc = count_proc();
+
+  // copy from kernel to user space
+  if(copyout(p->pagetable, sinfo_addr, (char *)&sinfo, sizeof(sinfo)) < 0)
+	  return -1;
+
   return 0;
 }
