@@ -528,7 +528,7 @@ scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
 
-        // Use the global kernel page when no process is running.
+        // Use global kernel_pagetable when no process is running.
         kvminithart();
 
         found = 1;
@@ -538,6 +538,8 @@ scheduler(void)
 #if !defined (LAB_FS)
     if(found == 0) {
       intr_on();
+      // Use global kernel_pagetable when no process is running.
+      kvminithart();
       asm volatile("wfi");
     }
 #else
