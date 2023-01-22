@@ -170,9 +170,11 @@ pagetable_t     uvmcreate(void);
 void            uvminit(pagetable_t, uchar *, uint);
 uint64          uvmalloc(pagetable_t, uint64, uint64);
 uint64          uvmdealloc(pagetable_t, uint64, uint64);
+void            kuvmdealloc(pagetable_t, uint64, uint64);
 #ifdef SOL_COW
 #else
 int             uvmcopy(pagetable_t, pagetable_t, uint64);
+int             u2kvmcopy(pagetable_t, pagetable_t, uint64, uint64);
 #endif
 void            uvmfree(pagetable_t, uint64);
 void            uvmunmap(pagetable_t, uint64, uint64, int);
@@ -227,4 +229,11 @@ void            sockclose(struct sock *);
 int             sockread(struct sock *, uint64, int);
 int             sockwrite(struct sock *, uint64, int);
 void            sockrecvudp(struct mbuf*, uint32, uint16, uint16);
+#endif
+
+// Added for page table lab.
+#ifdef LAB_PGTBL
+// vmcopyin.c
+int             copyin_new(pagetable_t, char *, uint64, uint64);
+int             copyinstr_new(pagetable_t, char *, uint64, uint64);
 #endif

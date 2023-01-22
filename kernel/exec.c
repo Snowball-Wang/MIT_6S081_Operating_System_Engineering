@@ -51,6 +51,9 @@ exec(char *path, char **argv)
     uint64 sz1;
     if((sz1 = uvmalloc(pagetable, sz, ph.vaddr + ph.memsz)) == 0)
       goto bad;
+    // user size need to be less than PLIC
+    if(sz1 >= PLIC)
+      goto bad;
     sz = sz1;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
@@ -107,7 +110,14 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(p->name, last, sizeof(p->name));
-    
+
+  // Deallocate old user page mappings in kernel page table.
+  kuvmdealloc(p->kpagetable, oldsz, 0);
+
+  // Add new user mappings to kernel page table.
+  if(u2kvmcopy(pagetable, p->kpagetable, 0, sz) < 0)
+    panic("u2kvmcopy in exec");
+
   // Commit to the user image.
   oldpagetable = p->pagetable;
   p->pagetable = pagetable;

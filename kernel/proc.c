@@ -226,7 +226,8 @@ proc_freekpagetable(struct proc *p)
   // freeing physical pages.
   uvmunmap(p->kpagetable, UART0, 1, 0);
   uvmunmap(p->kpagetable, VIRTIO0, 1, 0);
-  uvmunmap(p->kpagetable, CLINT, 0x10000 / PGSIZE, 0);
+  // comment unmap code for CLINT
+  //uvmunmap(p->kpagetable, CLINT, 0x10000 / PGSIZE, 0);
   uvmunmap(p->kpagetable, PLIC, 0x400000 / PGSIZE, 0);
   uvmunmap(p->kpagetable, KERNBASE, ((uint64)etext-KERNBASE) / PGSIZE, 0);
   uvmunmap(p->kpagetable, (uint64)etext, (PHYSTOP-(uint64)etext) / PGSIZE, 0);
@@ -234,6 +235,9 @@ proc_freekpagetable(struct proc *p)
 
   // unmap the kernel stack and free its physical page
   uvmunmap(p->kpagetable, p->kstack, 1, 1);
+
+  // unmap user's mappings in kernel page table.
+  uvmunmap(p->kpagetable, 0, p->sz / PGSIZE, 0);
 
   // free pages
   uvmfree(p->kpagetable, 0);
@@ -265,6 +269,10 @@ userinit(void)
   uvminit(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
 
+  // Add user mappings to process's kernel page table.
+  if(u2kvmcopy(p->pagetable, p->kpagetable, 0, p->sz) < 0)
+    panic("u2kvmcopy in userinit");
+
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
   p->trapframe->sp = PGSIZE;  // user stack pointer
@@ -286,12 +294,22 @@ growproc(int n)
   struct proc *p = myproc();
 
   sz = p->sz;
+
+  // user size needs to be less than PLIC
+  if(sz + n >= PLIC)
+    return -1;
+
   if(n > 0){
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
       return -1;
     }
+    // Add user mappings to process's kernel page table.
+    if(u2kvmcopy(p->pagetable, p->kpagetable, p->sz, n) < 0)
+      panic("u2kvmcopy in sbrk");
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+    // remove deallocated user's mappings in kernel page table.
+    kuvmdealloc(p->kpagetable, p->sz, p->sz + n);
   }
   p->sz = sz;
   return 0;
@@ -318,6 +336,14 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
+
+  // Add child's user mappings to its kernel page table.
+  if(u2kvmcopy(np->pagetable, np->kpagetable, 0, np->sz) < 0)
+  {
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
 
   np->parent = p;
 
