@@ -233,7 +233,7 @@ proc_freekpagetable(struct proc *p)
   uvmunmap(p->kpagetable, TRAMPOLINE, 1, 0);
 
   // unmap the kernel stack and free its physical page
-  uvmunmap(p->kpagetable, myproc()->kstack, 1, 1);
+  uvmunmap(p->kpagetable, p->kstack, 1, 1);
 
   // free pages
   uvmfree(p->kpagetable, 0);
