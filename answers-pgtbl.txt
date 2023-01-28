@@ -1,0 +1,8 @@
+Q1: Explain the output of vmprint in terms of Fig 3-4 from the text. What does page 0 contain? What is in page 2? When running in user mode, could the process read/write the memory mapped by page 1?
+Page 0 contains the mappings of virtual address 0x0 to physical address 0x0000000087f6b000 for user page table.
+Page 2 contains the mappings of virtual address 0x1000 to physical address 0x0000000087f67000 for user page table.
+Both page 0 and page 2 stores the mappings of process's text section into the physical memory.
+Page 1 belongs to user process's text section, so the process owns the permission of reading but not writing the memory.
+
+Q2: Explain why the third test srcva + len < srcva is necessary in copyin_new(): give values for srcva and len for which the first two test fail(i.e., they will not cause to return -1) but for which the third one is true(resulting in returning -1).
+Like the book explains why if(ph.vaddr + ph.memsz < ph.vaddr) is needed in exec.c, we need the third test srcva + len < srcva to check whether srcva + len overflows 64-bit integer, which can be used by malicious attackers to exploit xv6 system vulnerability.
