@@ -408,9 +408,7 @@ u2kvmcopy(pagetable_t upagetable, pagetable_t kpagetable, uint64 start, uint64 s
   uint64 pa, i;
   uint flags;
 
-  start = PGROUNDUP(start);
-
-  for(i = start; i < start + sz; i += PGSIZE){
+  for(i = PGROUNDUP(start); i < start + sz; i += PGSIZE){
     if((pte = walk(upagetable, i, 0)) == 0)
       panic("u2kvmcopy: pte should exist");
     if((*pte & PTE_V) == 0)

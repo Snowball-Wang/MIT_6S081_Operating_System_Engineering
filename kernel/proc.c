@@ -237,7 +237,7 @@ proc_freekpagetable(struct proc *p)
   uvmunmap(p->kpagetable, p->kstack, 1, 1);
 
   // unmap user's mappings in kernel page table.
-  uvmunmap(p->kpagetable, 0, p->sz / PGSIZE, 0);
+  uvmunmap(p->kpagetable, 0, PGROUNDUP(p->sz) / PGSIZE, 0);
 
   // free pages
   uvmfree(p->kpagetable, 0);
@@ -305,7 +305,7 @@ growproc(int n)
     }
     // Add user mappings to process's kernel page table.
     if(u2kvmcopy(p->pagetable, p->kpagetable, p->sz, n) < 0)
-      panic("u2kvmcopy in sbrk");
+      return -1;
   } else if(n < 0){
     sz = uvmdealloc(p->pagetable, sz, sz + n);
     // remove deallocated user's mappings in kernel page table.
