@@ -1,0 +1,33 @@
+Q1: Which registers contain arguments to functions? For example, which register holds 13 in main's call to printf?
+Registers a0-a7 contain arguments to functions. Register a2 holds 13 in main's call to printf.
+
+Q2: Where is the call to function f in the assembly code for main? where is the call to g? (Hint: the compiler may inline functions.)
+Function f and g has been optimized by compiler to be inline function.
+Function g is replaced by the following instruction:
+    addiw	a0,a0,3
+Function f in the main is replaced by assembly `li a1, 12`.
+
+Q3: At what address is the function printf located?
+Assembly of jumping to executing function printf:
+    0x30:   auipc   ra,0x0
+    0x34:   jarl    1536(ra)
+The first assmebly `auipc ra,0x0` will set register $ra to 0x30.
+The second assembly `jarl` will jump to address ($ra + 1536), which is 0x630.
+
+Q4: What value is in the register ra just after the jalr to printf in main?
+Instruction jalr will put the pc of next instruction into register rd(register ra in this case).
+So ra will be 0x34 + 4 = 0x38.
+
+Q5: Run the following code.
+    unsigned int i = 0x00646c72;
+    printf("H%x Wo%s", 57616, &i);
+What is the output?
+The output depends on that fact that the RISC-V is little-endian.
+If the RISC-V were instead big endian what would you set i to in order to yield the same output? Would you change 57616 to a different value?
+Output would be like 'He110 World'.
+I would set i to 0x726c6400. 57616 does not need change.
+
+Q6: In the following code, what is going to be printed after 'y='?(note: the answer is not a specific value.)
+Why does this happen?
+    printf("x=%d, y=%d", 3);
+y would be some rubbish value 4-byte above where 3 is placed in the stack.
