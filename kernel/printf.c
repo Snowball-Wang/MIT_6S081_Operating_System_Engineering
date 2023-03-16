@@ -122,6 +122,7 @@ panic(char *s)
   printf(s);
   printf("\n");
   panicked = 1; // freeze uart output from other CPUs
+  backtrace(); // add here to show kernel's backtrace
   for(;;)
     ;
 }
@@ -131,4 +132,19 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+void backtrace(void)
+{
+  // Get current frame pointer from reg s0
+  uint64 fp = r_fp();
+  uint64 i = fp;
+
+  // Get the ret addr and do loops based on prev fp
+  printf("backtrace:\n");
+  while(i < PGROUNDUP(fp))
+  {
+    printf("%p\n", *(uint64 *)(i - 8));
+    i = *(uint64 *)(i - 16);
+  }
 }
