@@ -96,3 +96,25 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// test0
+uint64
+sys_sigalarm(void)
+{
+  int n; // alarm interval
+  uint64 p; // pointer to handler function
+
+  if(argint(0, &n) < 0 || argaddr(1, &p) < 0)
+    return -1;
+
+  myproc()->alarm_interval = n;
+  myproc()->alarm_handler = p;
+  return 0;
+}
+
+// test0: sys_sigreturn just returns zero
+uint64
+sys_sigreturn(void)
+{
+  return 0;
+}

@@ -78,8 +78,18 @@ usertrap(void)
 
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
+  {
+    // add one tick to current process's ticks
+    p->elapse_ticks += 1;
+    // see if process's alarm interval expires
+    if(p->elapse_ticks == p->alarm_interval)
+    {
+      // set the sepc to the addr of alarm handler
+      p->trapframe->epc = p->alarm_handler;
+      p->elapse_ticks = 0;
+    }
     yield();
-
+  }
   usertrapret();
 }
 
