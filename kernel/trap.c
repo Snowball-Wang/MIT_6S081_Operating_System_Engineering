@@ -79,14 +79,23 @@ usertrap(void)
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
   {
-    // add one tick to current process's ticks
-    p->elapse_ticks += 1;
-    // see if process's alarm interval expires
-    if(p->elapse_ticks == p->alarm_interval)
+    // sigalarm(0, 0) is not called and re-entrant calls is not allowed
+    if(!(p->alarm_interval == 0 && p->alarm_handler == 0) && !(p->intr_is_running))
     {
-      // set the sepc to the addr of alarm handler
-      p->trapframe->epc = p->alarm_handler;
-      p->elapse_ticks = 0;
+
+      // add one tick to current process's ticks
+      p->elapse_ticks += 1;
+      // see if process's alarm interval expires
+      if(p->elapse_ticks >= p->alarm_interval)
+      {
+        // save the current trapframe
+        memmove(&(p->intr_trap), p->trapframe, sizeof(struct trapframe));
+        // set the sepc to the addr of alarm handler
+        p->trapframe->epc = p->alarm_handler;
+        p->elapse_ticks = 0;
+        // set running flag
+        p->intr_is_running = 1;
+      }
     }
     yield();
   }

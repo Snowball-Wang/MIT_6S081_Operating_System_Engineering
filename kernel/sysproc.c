@@ -109,6 +109,8 @@ sys_sigalarm(void)
 
   myproc()->alarm_interval = n;
   myproc()->alarm_handler = p;
+
+  myproc()->intr_is_running = 0;
   return 0;
 }
 
@@ -116,5 +118,7 @@ sys_sigalarm(void)
 uint64
 sys_sigreturn(void)
 {
+  memmove(myproc()->trapframe, &(myproc()->intr_trap), sizeof(struct trapframe));
+  myproc()->intr_is_running = 0;
   return 0;
 }

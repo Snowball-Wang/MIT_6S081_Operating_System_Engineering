@@ -106,4 +106,6 @@ struct proc {
   int alarm_interval;          // alarm interval
   uint64 alarm_handler;        // alarm handler function
   int elapse_ticks;            // ticks passed since last call
+  struct trapframe intr_trap;  // trapframe saved for interrupt
+  int intr_is_running;         // flag to set if interrupt handler is running
 };
