@@ -130,9 +130,9 @@ main(int argc, char *argv[])
     void (*f)(char *);
     char *s;
   } tests[] = {
-    { sparse_memory, "lazy alloc"},
-    { sparse_memory_unmap, "lazy unmap"},
-    { oom, "out of memory"},
+    { sparse_memory, "lazy_alloc"},
+    { sparse_memory_unmap, "lazy_unmap"},
+    { oom, "out_of_memory"},
     { 0, 0},
   };
     
