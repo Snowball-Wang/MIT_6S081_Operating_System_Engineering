@@ -43,15 +43,24 @@ sys_sbrk(void)
 {
   int addr;
   int n;
+  struct proc *p = myproc();
 
   if(argint(0, &n) < 0)
     return -1;
-  addr = myproc()->sz;
-/* comment to just increase process's size
-  if(growproc(n) < 0)
-    return -1;
-*/
-  myproc()->sz = addr + n;
+  addr = p->sz;
+  // addr + n might overflow.
+  // when it happens, just return the original addr.
+  if((addr + n) < 0){
+    return addr;
+  }
+  // if n >= 0, do lazy allocation.
+  // if n < 0, do eager deallocation.
+  if(n >= 0) {
+    p->sz = addr + n;
+  } else {
+    if(growproc(n) < 0)
+      return -1;
+  }
   return addr;
 }
 

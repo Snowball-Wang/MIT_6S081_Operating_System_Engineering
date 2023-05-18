@@ -69,23 +69,14 @@ usertrap(void)
     // ok
   } else if(r_scause() == 13 || r_scause() == 15){
     uint64 va = r_stval();
-    // print the page table before mapping newly-alloc page
-    vmprint(p->pagetable);
-    printf("page fault: %p\n", va);
-    uint64 ka = (uint64)kalloc();
-    if(ka == 0)
-    {
-      p->killed = 1;
-    } else {
-      memset((void *)ka, 0, PGSIZE);
-      if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, ka, PTE_W|PTE_R|PTE_U) != 0)
-      {
-        kfree((void *)ka);
+
+    if(is_lazyaddr(va)){
+      if(lazyalloc(va) == 0)
         p->killed = 1;
-      }
+    } else {
+      p->killed = 1;
     }
-    // print the page table after the mapping
-    vmprint(p->pagetable);
+
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
@@ -237,3 +228,33 @@ devintr()
   }
 }
 
+int
+is_lazyaddr(uint64 va)
+{
+  struct proc *p = myproc();
+  // we also need to check va is not remapped
+  pte_t *pte;
+  int pte_not_exist = ((pte = walk(p->pagetable, va, 0))==0) || ((*pte & PTE_V)==0);
+  // va should lower than p->sz but higher than user stack
+  if(va < p->sz && va >= p->trapframe->sp && pte_not_exist)
+    return 1;
+  else
+    return 0;
+}
+
+int
+lazyalloc(uint64 va)
+{
+  struct proc* p = myproc();
+  uint64 ka = (uint64)kalloc();
+  if(ka == 0){
+    return 0;
+  } else {
+    memset((void *)ka, 0, PGSIZE);
+    if(mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, ka, PTE_W|PTE_R|PTE_U) != 0){
+      kfree((void *)ka);
+      return 0;
+    }
+  }
+  return 1;
+}
